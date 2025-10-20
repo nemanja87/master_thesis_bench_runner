@@ -1,3 +1,8 @@
+**/bin/
+**/obj/
+**/TestResults/
+**/.vs/
+
 # Secrets & certs (do not commit)
 deploy/certs/*
 !deploy/certs/generate.sh
