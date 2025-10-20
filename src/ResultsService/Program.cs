@@ -35,7 +35,7 @@ foreach (DictionaryEntry entry in Environment.GetEnvironmentVariables())
     }
 
     var normalizedKey = $"Bench:{suffix.Replace("__", ":", StringComparison.Ordinal)}";
-    benchEnvironmentOverrides[normalizedKey] = entry.Value?.ToString();
+    benchEnvironmentOverrides[normalizedKey] = entry.Value as string;
 }
 
 if (benchEnvironmentOverrides.Count > 0)

@@ -63,9 +63,9 @@ const defaultRequest: BenchRunRequest = {
   security: "S2",
   workload: "orders-create",
   rps: 10,
-  connections: 1,
-  duration: 5,
-  warmup: 1,
+  connections: 10,
+  duration: 60,
+  warmup: 10,
 };
 
 function App() {
@@ -267,6 +267,8 @@ function App() {
                   <th>Started</th>
                   <th>Protocol</th>
                   <th>Security</th>
+                  <th>RPS</th>
+                  <th>RPS Achieved</th>
                   <th>P50 (ms)</th>
                   <th>P95 (ms)</th>
                   <th>P99 (ms)</th>
@@ -279,6 +281,8 @@ function App() {
                     <td>{new Date(run.startedAt).toLocaleString()}</td>
                     <td>{run.protocol.toUpperCase()}</td>
                     <td>{run.securityProfile}</td>
+                    <td>{run.rps}</td>
+                    <td>{normalizeNumber(run.throughput)}</td>
                     <td>{normalizeNumber(run.p50Ms)}</td>
                     <td>{normalizeNumber(run.p95Ms)}</td>
                     <td>{normalizeNumber(run.p99Ms)}</td>
@@ -287,9 +291,6 @@ function App() {
                 ))}
               </tbody>
             </table>
-            <div className="chart-container">
-              <PercentileChart data={percentiles} />
-            </div>
           </div>
         </section>
 

@@ -79,6 +79,10 @@ builder.WebHost.ConfigureKestrel(options =>
             listenOptions.UseHttps(serverCertificate, ConfigureHttpsOptions);
         }
     });
+
+    options.Limits.Http2.MaxStreamsPerConnection = 1024;
+    options.Limits.Http2.InitialConnectionWindowSize = 1_048_576;
+    options.Limits.Http2.InitialStreamWindowSize = 1_048_576; // 1 MB
 });
 
 builder.Services.AddGrpc(options =>

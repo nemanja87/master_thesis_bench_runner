@@ -67,9 +67,9 @@ public class GrpcBenchmarkToolRunner : IBenchmarkToolRunner
         startInfo.ArgumentList.Add(GrpcCallName);
         startInfo.ArgumentList.Add("--proto");
         startInfo.ArgumentList.Add(_options.Tools.GhzProtoPath);
-        startInfo.ArgumentList.Add("--concurrency");
-        startInfo.ArgumentList.Add(context.Request.Connections.ToString());
         startInfo.ArgumentList.Add("--connections");
+        startInfo.ArgumentList.Add("1");
+        startInfo.ArgumentList.Add("--concurrency");
         startInfo.ArgumentList.Add(context.Request.Connections.ToString());
         startInfo.ArgumentList.Add("--rps");
         startInfo.ArgumentList.Add(context.Request.Rps.ToString());
