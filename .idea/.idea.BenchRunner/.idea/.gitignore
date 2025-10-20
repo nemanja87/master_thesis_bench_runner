@@ -167,3 +167,11 @@ out/
 # -------------------------------
 httpRequests/
 scratch/
+
+# ---- secrets & certs (DO NOT COMMIT) ----
+deploy/certs/**/*.key
+deploy/certs/**/*.pem
+deploy/certs/**/*.pfx
+deploy/certs/**/*.crt
+deploy/certs/**/*.srl
+!deploy/certs/generate.sh
