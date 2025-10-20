@@ -1,0 +1,11 @@
+/Users/nemo/Desktop/BenchRunner/src/Shared.Contracts/bin/Debug/net9.0/Shared.Contracts.deps.json
+/Users/nemo/Desktop/BenchRunner/src/Shared.Contracts/bin/Debug/net9.0/Shared.Contracts.dll
+/Users/nemo/Desktop/BenchRunner/src/Shared.Contracts/bin/Debug/net9.0/Shared.Contracts.pdb
+/Users/nemo/Desktop/BenchRunner/src/Shared.Contracts/obj/Debug/net9.0/Shared.Contracts.GeneratedMSBuildEditorConfig.editorconfig
+/Users/nemo/Desktop/BenchRunner/src/Shared.Contracts/obj/Debug/net9.0/Shared.Contracts.AssemblyInfoInputs.cache
+/Users/nemo/Desktop/BenchRunner/src/Shared.Contracts/obj/Debug/net9.0/Shared.Contracts.AssemblyInfo.cs
+/Users/nemo/Desktop/BenchRunner/src/Shared.Contracts/obj/Debug/net9.0/Shared.Contracts.csproj.CoreCompileInputs.cache
+/Users/nemo/Desktop/BenchRunner/src/Shared.Contracts/obj/Debug/net9.0/Shared.Contracts.dll
+/Users/nemo/Desktop/BenchRunner/src/Shared.Contracts/obj/Debug/net9.0/refint/Shared.Contracts.dll
+/Users/nemo/Desktop/BenchRunner/src/Shared.Contracts/obj/Debug/net9.0/Shared.Contracts.pdb
+/Users/nemo/Desktop/BenchRunner/src/Shared.Contracts/obj/Debug/net9.0/ref/Shared.Contracts.dll

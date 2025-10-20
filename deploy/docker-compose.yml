@@ -1,0 +1,125 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: results_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  authserver:
+    build:
+      context: ..
+      dockerfile: src/AuthServer/Dockerfile
+    environment:
+      SEC_PROFILE: ${SEC_PROFILE:-S2}
+      BENCH_Security__Tls__ServerCertificatePath: /certs/servers/authserver/authserver.pfx
+      BENCH_Security__Tls__ServerCertificatePassword: ""
+      BENCH_Security__Tls__CaCertificatePath: /certs/ca/ca.crt.pem
+    volumes:
+      - ./certs:/certs:ro
+    ports:
+      - "5001:5001"
+
+  gateway:
+    build:
+      context: ..
+      dockerfile: src/Gateway/Dockerfile
+    environment:
+      SEC_PROFILE: ${SEC_PROFILE:-S2}
+      BENCH_Security__Tls__ServerCertificatePath: /certs/servers/gateway/gateway.pfx
+      BENCH_Security__Tls__ServerCertificatePassword: ""
+      BENCH_Security__Tls__CaCertificatePath: /certs/ca/ca.crt.pem
+      BENCH_Security__Tls__ClientCertificatePath: /certs/clients/results-service/results-service.crt.pem
+      BENCH_Security__Tls__ClientCertificateKeyPath: /certs/clients/results-service/results-service.key.pem
+      BENCH_Security__Jwt__Authority: https://authserver:5001
+      BENCH_Security__Jwt__MetadataAddress: https://authserver:5001/.well-known/openid-configuration
+    volumes:
+      - ./certs:/certs:ro
+    ports:
+      - "8080:8080"
+      - "9090:9090"
+    depends_on:
+      - authserver
+      - orderservice
+      - inventoryservice
+
+  orderservice:
+    build:
+      context: ..
+      dockerfile: src/OrderService/Dockerfile
+    environment:
+      SEC_PROFILE: ${SEC_PROFILE:-S2}
+      BENCH_Security__Tls__ServerCertificatePath: /certs/servers/orderservice/orderservice.pfx
+      BENCH_Security__Tls__ServerCertificatePassword: ""
+      BENCH_Security__Tls__CaCertificatePath: /certs/ca/ca.crt.pem
+    volumes:
+      - ./certs:/certs:ro
+    ports:
+      - "8081:8081"
+      - "9091:9091"
+
+  inventoryservice:
+    build:
+      context: ..
+      dockerfile: src/InventoryService/Dockerfile
+    environment:
+      SEC_PROFILE: ${SEC_PROFILE:-S2}
+      BENCH_Security__Tls__ServerCertificatePath: /certs/servers/inventoryservice/inventoryservice.pfx
+      BENCH_Security__Tls__ServerCertificatePassword: ""
+      BENCH_Security__Tls__CaCertificatePath: /certs/ca/ca.crt.pem
+    volumes:
+      - ./certs:/certs:ro
+    ports:
+      - "8082:8082"
+      - "9092:9092"
+
+  resultsservice:
+    build:
+      context: ..
+      dockerfile: src/ResultsService/Dockerfile
+    environment:
+      SEC_PROFILE: ${SEC_PROFILE:-S2}
+      BENCH_Security__Tls__ServerCertificatePath: /certs/servers/resultsservice/resultsservice.pfx
+      BENCH_Security__Tls__ServerCertificatePassword: ""
+      BENCH_Security__Tls__CaCertificatePath: /certs/ca/ca.crt.pem
+      BENCH_Target__RestBaseUrl: http://gateway:8080
+      BENCH_Target__RestTlsBaseUrl: https://gateway:8080
+      BENCH_Target__RestMtlsBaseUrl: https://gateway:8080
+      BENCH_Target__GrpcAddress: gateway:9090
+      BENCH_Security__Jwt__TokenEndpoint: https://authserver:5001/connect/token
+      BENCH_Security__Jwt__ClientId: bench-runner
+      BENCH_Security__Jwt__ClientSecret: bench-runner-secret
+      BENCH_Security__Jwt__Scope: "orders.write orders.read inventory.write"
+      BENCH_Security__Tls__ClientCertificatePath: /certs/clients/bench-runner/bench-runner.crt.pem
+      BENCH_Security__Tls__ClientCertificateKeyPath: /certs/clients/bench-runner/bench-runner.key.pem
+      BENCH_Tools__K6Path: /usr/local/bin/k6
+      BENCH_Tools__GhzPath: /usr/local/bin/ghz
+      BENCH_Tools__GhzProtoPath: /app/protos/ordering.proto
+      RESULTS__AllowAnonymousReads: "true"
+      RESULTS__UiScheme: http
+      RESULTS_UI_SCHEME: http
+    volumes:
+      - ./certs:/certs:ro
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - authserver
+      - gateway
+      - orderservice
+
+  dashboard:
+    build:
+      context: ../ui/dashboard
+      dockerfile: Dockerfile
+    ports:
+      - "4173:80"
+    depends_on:
+      - resultsservice
+
+volumes:
+  postgres-data:

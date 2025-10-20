@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Grpc.AspNetCore" Version="2.63.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.10" />
+    <PackageReference Include="prometheus-net.AspNetCore" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Shared.Contracts\Shared.Contracts.csproj" />
+    <ProjectReference Include="..\Shared\Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Protobuf Include="..\Shared.Contracts\Protos\ordering.proto" GrpcServices="Server" Link="Protos/ordering.proto" />
+  </ItemGroup>
+
+</Project>

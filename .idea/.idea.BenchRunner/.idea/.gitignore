@@ -1,0 +1,169 @@
+# -------------------------------
+# IDE & Editor files
+# -------------------------------
+.idea/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.iml
+
+# Rider specific (additionally to your defaults)
+.idea.BenchRunner.iml
+projectSettingsUpdater.xml
+modules.xml
+contentModel.xml
+shelf/
+workspace.xml
+httpRequests/
+dataSources/
+dataSources.local.xml
+
+# -------------------------------
+# OS generated files
+# -------------------------------
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+desktop.ini
+
+# -------------------------------
+# .NET build output
+# -------------------------------
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+*.exe
+*.dll
+*.pdb
+*.cache
+*.dbmdl
+*.log
+*.vspscc
+*.vshost.*
+*.scc
+*.nupkg
+*.snupkg
+*.publish.xml
+*.userprefs
+*.coverage
+*.coveragexml
+TestResult*/
+TestResults/
+*.trx
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# -------------------------------
+# Docker & Deployment
+# -------------------------------
+docker-compose.override.yml
+docker-compose.local.yml
+docker-compose.*.yml
+deploy/.srl
+deploy/certs/clients/*
+deploy/certs/servers/*
+deploy/certs/scripts/*
+deploy/certs/ca/*
+!deploy/certs/generate.sh
+*.crt
+*.key
+*.pem
+*.pfx
+*.csr
+
+# Local environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# -------------------------------
+# Node / React frontend
+# -------------------------------
+ui/dashboard/node_modules/
+ui/dashboard/.eslintcache
+ui/dashboard/dist/
+ui/dashboard/build/
+ui/dashboard/.next/
+ui/dashboard/out/
+ui/dashboard/.nuxt/
+ui/dashboard/coverage/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+.pnp
+.pnp.js
+
+# -------------------------------
+# Unit tests and coverage
+# -------------------------------
+coverage/
+*.coveragereport.xml
+*.testresults.xml
+*.coverage
+*.coveragexml
+.vstest/
+TestResults/
+*.trx
+
+# -------------------------------
+# Logs & temporary data
+# -------------------------------
+*.log
+logs/
+*.tmp
+temp/
+tmp/
+__pycache__/
+*.swp
+*.swo
+
+# -------------------------------
+# Generated certificates & keys
+# -------------------------------
+deploy/certs/.srl
+deploy/certs/*.crt
+deploy/certs/*.pem
+deploy/certs/*.key
+deploy/certs/*.csr
+deploy/certs/*.pfx
+
+# -------------------------------
+# Other ignored files
+# -------------------------------
+*.bak
+*.old
+*.orig
+*.rej
+*.gz
+*.zip
+*.tar
+*.7z
+*.tgz
+*.tar.gz
+*.rar
+
+# -------------------------------
+# Output folders (custom)
+# -------------------------------
+publish/
+dist/
+artifacts/
+packages/
+bin/
+obj/
+out/
+
+# -------------------------------
+# JetBrains & Rider HTTP requests
+# -------------------------------
+httpRequests/
+scratch/

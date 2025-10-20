@@ -1,0 +1,8 @@
+**/bin
+**/obj
+**/node_modules
+**/dist
+.git
+.gitignore
+README.md
+ui/dashboard/.env
