@@ -1,2 +1,0 @@
-obj/Debug/net9.0/Ordering.cs \
-obj/Debug/net9.0/OrderingGrpc.cs: ../Shared.Contracts/Protos/ordering.proto
