@@ -1,6 +1,6 @@
-**/bin/
-**/obj/
-**/TestResults/
+**/[Bb]in/
+**/[Oo]bj/
+**/[Tt]est[Rr]esults/
 **/.vs/
 
 # Secrets & certs (do not commit)
