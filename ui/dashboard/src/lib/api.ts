@@ -31,8 +31,9 @@ export async function getHealth<T>(): Promise<T> {
   return ok.json() as Promise<T>;
 }
 
-export async function listRuns<T>(): Promise<T> {
-  const res = await fetch(`${API_BASE}/runs`);
+export async function listRuns<T>(limit?: number): Promise<T> {
+  const query = typeof limit === "number" ? `?limit=${encodeURIComponent(limit)}` : "";
+  const res = await fetch(`${API_BASE}/runs${query}`);
   const ok = await ensureOk(res, "Failed to list runs.");
   return ok.json() as Promise<T>;
 }

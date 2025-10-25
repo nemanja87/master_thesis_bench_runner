@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRunSelection } from "../store/selection";
 import type { BenchmarkRunListItem, TabKey } from "../types";
 
@@ -10,16 +10,18 @@ interface HistoryProps {
   setActiveTab: (tab: TabKey) => void;
 }
 
-const PAGE_SIZE = 10;
+type SortColumn = "startedAt" | "securityProfile" | "rps" | "protocol";
+
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
   dateStyle: "medium",
   timeStyle: "short",
 });
 
 function History({ runs, isLoading, onRefresh, setActiveTab }: HistoryProps) {
-  const [page, setPage] = useState(0);
   const [lastCheckedIndex, setLastCheckedIndex] = useState<number | null>(null);
-  const [focusedRunId, setFocusedRunId] = useState<string | null>(null);
+  const [sortState, setSortState] = useState<Array<{ column: SortColumn; direction: "asc" | "desc" }>>([
+    { column: "startedAt", direction: "desc" },
+  ]);
   const selectedIds = useRunSelection((state) => state.selectedIds);
   const select = useRunSelection((state) => state.select);
   const remove = useRunSelection((state) => state.remove);
@@ -27,30 +29,66 @@ function History({ runs, isLoading, onRefresh, setActiveTab }: HistoryProps) {
   const clearSelection = useRunSelection((state) => state.clear);
   const selectedCount = selectedIds.length;
 
-  const totalPages = Math.max(1, Math.ceil(runs.length / PAGE_SIZE));
-  const pageStart = page * PAGE_SIZE;
-  const pageRuns = runs.slice(pageStart, pageStart + PAGE_SIZE);
-  const focusedRun = runs.find((run) => run.id === focusedRunId) ?? runs[0] ?? null;
+  const effectiveSortState: Array<{ column: SortColumn; direction: "asc" | "desc" }> =
+    sortState.length > 0 ? sortState : [{ column: "startedAt", direction: "desc" }];
 
-  useEffect(() => {
-    if (pageStart >= runs.length && page > 0) {
-      setPage((current) => Math.max(0, current - 1));
-    }
-  }, [runs.length, pageStart, page]);
+  const sortedRuns = useMemo(() => {
+    const copy = [...runs];
+    copy.sort((a, b) => {
+      for (const rule of effectiveSortState) {
+        let comparison = 0;
+        switch (rule.column) {
+          case "startedAt": {
+            const aTime = a.startedAt ? new Date(a.startedAt).getTime() : 0;
+            const bTime = b.startedAt ? new Date(b.startedAt).getTime() : 0;
+            comparison = aTime - bTime;
+            break;
+          }
+          case "securityProfile":
+            comparison = (a.securityProfile ?? "").localeCompare(b.securityProfile ?? "");
+            break;
+          case "protocol":
+            comparison = (a.protocol ?? "").localeCompare(b.protocol ?? "");
+            break;
+          case "rps":
+            comparison = (a.rps ?? 0) - (b.rps ?? 0);
+            break;
+          default:
+            comparison = 0;
+        }
 
-  useEffect(() => {
-    if (!focusedRunId && runs.length > 0) {
-      setFocusedRunId(runs[0].id);
-    }
-  }, [runs, focusedRunId]);
+        if (comparison !== 0) {
+          return rule.direction === "asc" ? comparison : -comparison;
+        }
+      }
+      return 0;
+    });
+    return copy;
+  }, [runs, effectiveSortState]);
 
-  const tableRows = useMemo(() => pageRuns, [pageRuns]);
+  const tableRows = useMemo(() => sortedRuns, [sortedRuns]);
+
+  const handleSort = (column: SortColumn) => {
+    setSortState((current) => {
+      const index = current.findIndex((entry) => entry.column === column);
+      if (index === -1) {
+        return [...current, { column, direction: column === "startedAt" ? "desc" : "asc" }];
+      }
+      const next = [...current];
+      if (next[index].direction === "asc") {
+        next[index] = { column, direction: "desc" };
+        return next;
+      }
+      next.splice(index, 1);
+      return next.length > 0 ? next : [{ column: "startedAt", direction: "desc" }];
+    });
+  };
 
   function handleCheckboxChange(runId: string, absoluteIndex: number, checked: boolean, shiftKey: boolean) {
     if (shiftKey && lastCheckedIndex !== null) {
       const start = Math.min(lastCheckedIndex, absoluteIndex);
       const end = Math.max(lastCheckedIndex, absoluteIndex);
-      const idsInRange = runs.slice(start, end + 1).map((run) => run.id);
+      const idsInRange = sortedRuns.slice(start, end + 1).map((run) => run.id);
       if (checked) {
         selectMany(idsInRange);
       } else {
@@ -102,20 +140,32 @@ function History({ runs, isLoading, onRefresh, setActiveTab }: HistoryProps) {
         </div>
 
         <div className="mt-3 overflow-x-auto">
+          <div className="max-h-[65vh] overflow-y-auto">
           <table className="min-w-full table-fixed border-collapse text-sm">
-            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-              <tr>
-                <th scope="col" className="w-10 px-3 py-2 text-left">
-                  <span className="sr-only">Select run</span>
-                </th>
-                <th scope="col" className="px-3 py-2 text-left">Run ID</th>
-                <th scope="col" className="px-3 py-2 text-left">Started</th>
-                <th scope="col" className="px-3 py-2 text-left">Workload</th>
-                <th scope="col" className="px-3 py-2 text-left">Protocol</th>
-                <th scope="col" className="px-3 py-2 text-left">Profile</th>
-                <th scope="col" className="px-3 py-2 text-left">RPS</th>
-                <th scope="col" className="px-3 py-2 text-left">Duration</th>
-                <th scope="col" className="px-3 py-2 text-left">Status</th>
+              <thead className="sticky top-0 z-10 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th scope="col" className="w-10 px-3 py-2 text-left">
+                    <span className="sr-only">Select run</span>
+                  </th>
+                  <th scope="col" className="px-3 py-2 text-left">Run ID</th>
+                  <th scope="col" className="px-3 py-2 text-left">
+                    <SortableHeader column="startedAt" label="Started" sortState={effectiveSortState} onSort={handleSort} />
+                  </th>
+                  <th scope="col" className="px-3 py-2 text-left">Workload</th>
+                  <th scope="col" className="px-3 py-2 text-left">
+                    <SortableHeader column="protocol" label="Protocol" sortState={effectiveSortState} onSort={handleSort} />
+                  </th>
+                  <th scope="col" className="px-3 py-2 text-left">
+                    <SortableHeader column="securityProfile" label="Profile" sortState={effectiveSortState} onSort={handleSort} />
+                  </th>
+                  <th scope="col" className="px-3 py-2 text-left">
+                    <SortableHeader column="rps" label="RPS" sortState={effectiveSortState} onSort={handleSort} />
+                  </th>
+                  <th scope="col" className="px-3 py-2 text-left">p50 (ms)</th>
+                  <th scope="col" className="px-3 py-2 text-left">p95 (ms)</th>
+                  <th scope="col" className="px-3 py-2 text-left">p99 (ms)</th>
+                  <th scope="col" className="px-3 py-2 text-left">Throughput</th>
+                  <th scope="col" className="px-3 py-2 text-left">Error %</th>
               </tr>
             </thead>
             <tbody>
@@ -134,16 +184,12 @@ function History({ runs, isLoading, onRefresh, setActiveTab }: HistoryProps) {
                 </tr>
               )}
               {tableRows.map((run, index) => {
-                const absoluteIndex = pageStart + index;
+                const absoluteIndex = index;
                 const isSelected = selectedIds.includes(run.id);
                 return (
                   <tr
                     key={run.id}
-                    className={clsx(
-                      "cursor-pointer border-b border-slate-100 transition hover:bg-slate-50",
-                      focusedRunId === run.id && "bg-slate-50",
-                    )}
-                    onClick={() => setFocusedRunId(run.id)}
+                    className={clsx("border-b border-slate-100 transition hover:bg-slate-50")}
                   >
                     <td className="px-3 py-2">
                       <input
@@ -166,59 +212,20 @@ function History({ runs, isLoading, onRefresh, setActiveTab }: HistoryProps) {
                     <td className="px-3 py-2 text-slate-700">{run.protocol?.toUpperCase()}</td>
                     <td className="px-3 py-2 text-slate-700">{run.securityProfile}</td>
                     <td className="px-3 py-2 text-slate-700">{run.rps}</td>
-                    <td className="px-3 py-2 text-slate-700">{formatDuration(run.durationSeconds)}</td>
-                    <td className="px-3 py-2">
-                      <StatusBadge status={run.status} />
-                    </td>
+                    <td className="px-3 py-2 text-slate-700">{formatNumber(run.p50Ms)}</td>
+                    <td className="px-3 py-2 text-slate-700">{formatNumber(run.p95Ms)}</td>
+                    <td className="px-3 py-2 text-slate-700">{formatNumber(run.p99Ms)}</td>
+                    <td className="px-3 py-2 text-slate-700">{formatNumber(run.throughput)}</td>
+                    <td className="px-3 py-2 text-slate-700">{formatNumber(run.errorRatePct)}</td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
-        </div>
-
-        <div className="mt-4 flex items-center justify-between">
-          <p className="text-xs text-slate-500">
-            Page {Math.min(page + 1, totalPages)} of {totalPages}
-          </p>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setPage((current) => Math.max(0, current - 1))}
-              disabled={page === 0}
-              className="rounded-lg border border-slate-300 px-3 py-1 text-sm text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Previous
-            </button>
-            <button
-              type="button"
-              onClick={() => setPage((current) => Math.min(totalPages - 1, current + 1))}
-              disabled={page >= totalPages - 1}
-              className="rounded-lg border border-slate-300 px-3 py-1 text-sm text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Next
-            </button>
           </div>
         </div>
+        <div className="mt-4 text-xs text-slate-500">Showing {tableRows.length} total runs.</div>
       </section>
-
-      {focusedRun && (
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-slate-900">Run detail</h3>
-          <p className="text-sm text-slate-500">Quick snapshot of run {focusedRun.id}</p>
-          <dl className="mt-4 grid gap-4 text-sm text-slate-600 md:grid-cols-3">
-            <InfoRow label="Started" value={formatDate(focusedRun.startedAt)} />
-            <InfoRow label="Protocol" value={focusedRun.protocol?.toUpperCase()} />
-            <InfoRow label="Security" value={focusedRun.securityProfile} />
-            <InfoRow label="Workload" value={focusedRun.workload} />
-            <InfoRow label="Requested RPS" value={focusedRun.rps?.toString()} />
-            <InfoRow label="Throughput" value={formatNumber(focusedRun.throughput)} />
-            <InfoRow label="p50 (ms)" value={formatNumber(focusedRun.p50Ms)} />
-            <InfoRow label="p95 (ms)" value={formatNumber(focusedRun.p95Ms)} />
-            <InfoRow label="p99 (ms)" value={formatNumber(focusedRun.p99Ms)} />
-          </dl>
-        </section>
-      )}
 
       {selectedCount >= 2 && (
         <div className="fixed bottom-6 left-1/2 z-40 -translate-x-1/2">
@@ -257,13 +264,6 @@ function formatDate(timestamp?: string) {
   }
 }
 
-function formatDuration(duration?: number) {
-  if (typeof duration !== "number" || Number.isNaN(duration)) {
-    return "—";
-  }
-  return `${duration}s`;
-}
-
 function formatNumber(value?: number) {
   if (typeof value !== "number" || Number.isNaN(value)) {
     return "—";
@@ -271,28 +271,37 @@ function formatNumber(value?: number) {
   return value.toFixed(2);
 }
 
-function InfoRow({ label, value }: { label: string; value?: string }) {
-  return (
-    <div>
-      <dt className="text-xs uppercase tracking-wide text-slate-500">{label}</dt>
-      <dd className="text-base font-semibold text-slate-900">{value ?? "—"}</dd>
-    </div>
-  );
-}
+function SortableHeader({
+  column,
+  label,
+  sortState,
+  onSort,
+}: {
+  column: SortColumn;
+  label: string;
+  sortState: Array<{ column: SortColumn; direction: "asc" | "desc" }>;
+  onSort: (column: SortColumn) => void;
+}) {
+  const entryIndex = sortState.findIndex((entry) => entry.column === column);
+  const entry = entryIndex >= 0 ? sortState[entryIndex] : null;
+  const indicator = entry ? (entry.direction === "asc" ? "↑" : "↓") : "↕";
 
-function StatusBadge({ status }: { status?: string }) {
-  if (!status) {
-    return <span className="text-slate-500">—</span>;
-  }
-  const styles: Record<string, string> = {
-    Succeeded: "bg-green-100 text-green-800",
-    Failed: "bg-red-100 text-red-800",
-    Running: "bg-amber-100 text-amber-800",
-  };
   return (
-    <span className={clsx("rounded-full px-2 py-1 text-xs font-semibold", styles[status] ?? "bg-slate-100 text-slate-700")}>
-      {status}
-    </span>
+    <button
+      type="button"
+      onClick={() => onSort(column)}
+      className="inline-flex items-center gap-1 text-slate-600 transition hover:text-slate-900"
+    >
+      {label}
+      <span aria-hidden="true" className="text-[10px]">
+        {indicator}
+      </span>
+      {entry && (
+        <span className="rounded-full bg-slate-200 px-1 text-[10px] text-slate-700">
+          {entryIndex + 1}
+        </span>
+      )}
+    </button>
   );
 }
 

@@ -33,7 +33,7 @@ function App() {
     setIsLoadingRuns(true);
     setError(null);
     try {
-      const data = await listRuns<BenchmarkRunListItem[]>();
+      const data = await listRuns<BenchmarkRunListItem[]>(10000);
       setRuns(data);
     } catch (err) {
       console.error("Failed to load runs", err);

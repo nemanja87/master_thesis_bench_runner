@@ -6,6 +6,7 @@ using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -184,16 +185,22 @@ api.MapPost("/benchrunner/run", async (BenchRunRequest request, BenchmarkOrchest
 .WithName("RunBenchmarks")
 .RequireCors(DevCors);
 
-api.MapGet("/runs", async (ResultsDbContext db, IOptions<ResultsOptions> resultsOptions, CancellationToken cancellationToken) =>
+api.MapGet("/runs", async (ResultsDbContext db, IOptions<ResultsOptions> resultsOptions, [FromQuery] int? limit, CancellationToken cancellationToken) =>
 {
     if (!resultsOptions.Value.AllowAnonymousReads)
     {
         return Results.StatusCode(StatusCodes.Status403Forbidden);
     }
 
-    var runs = await db.BenchmarkRuns
-        .OrderByDescending(run => run.StartedAt)
-        .Take(50)
+    IQueryable<BenchmarkRun> query = db.BenchmarkRuns
+        .OrderByDescending(run => run.StartedAt);
+
+    if (limit.HasValue && limit.Value > 0)
+    {
+        query = query.Take(Math.Min(limit.Value, 1000));
+    }
+
+    var runs = await query
         .Select(run => new BenchmarkRunListItem(
             run.Id,
             run.StartedAt,
