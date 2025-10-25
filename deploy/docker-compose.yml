@@ -90,6 +90,10 @@ services:
       BENCH_Target__RestTlsBaseUrl: https://gateway:8080
       BENCH_Target__RestMtlsBaseUrl: https://gateway:8080
       BENCH_Target__GrpcAddress: gateway:9090
+      BENCH_Target__RestDirectBaseUrl: http://orderservice:8081
+      BENCH_Target__RestDirectTlsBaseUrl: https://orderservice:9091
+      BENCH_Target__RestDirectMtlsBaseUrl: https://orderservice:9091
+      BENCH_Target__GrpcDirectAddress: orderservice:9091
       BENCH_Security__Jwt__TokenEndpoint: https://authserver:5001/connect/token
       BENCH_Security__Jwt__ClientId: bench-runner
       BENCH_Security__Jwt__ClientSecret: bench-runner-secret

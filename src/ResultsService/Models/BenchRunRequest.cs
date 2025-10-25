@@ -7,6 +7,8 @@ public class BenchRunRequest
     [Required]
     public string Protocol { get; set; } = string.Empty; // rest | grpc
 
+    public string CallPath { get; set; } = "gateway"; // gateway | direct
+
     [Required]
     public string Security { get; set; } = string.Empty; // S0-S4
 

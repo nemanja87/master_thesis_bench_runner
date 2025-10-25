@@ -10,7 +10,7 @@ interface HistoryProps {
   setActiveTab: (tab: TabKey) => void;
 }
 
-type SortColumn = "startedAt" | "securityProfile" | "rps" | "protocol";
+type SortColumn = "startedAt" | "securityProfile" | "rps" | "protocol" | "callPath";
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
   dateStyle: "medium",
@@ -46,6 +46,9 @@ function History({ runs, isLoading, onRefresh, setActiveTab }: HistoryProps) {
           }
           case "securityProfile":
             comparison = (a.securityProfile ?? "").localeCompare(b.securityProfile ?? "");
+            break;
+          case "callPath":
+            comparison = String(a.callPath ?? "").localeCompare(String(b.callPath ?? ""));
             break;
           case "protocol":
             comparison = (a.protocol ?? "").localeCompare(b.protocol ?? "");
@@ -156,6 +159,9 @@ function History({ runs, isLoading, onRefresh, setActiveTab }: HistoryProps) {
                     <SortableHeader column="protocol" label="Protocol" sortState={effectiveSortState} onSort={handleSort} />
                   </th>
                   <th scope="col" className="px-3 py-2 text-left">
+                    <SortableHeader column="callPath" label="Call Path" sortState={effectiveSortState} onSort={handleSort} />
+                  </th>
+                  <th scope="col" className="px-3 py-2 text-left">
                     <SortableHeader column="securityProfile" label="Profile" sortState={effectiveSortState} onSort={handleSort} />
                   </th>
                   <th scope="col" className="px-3 py-2 text-left">
@@ -171,14 +177,14 @@ function History({ runs, isLoading, onRefresh, setActiveTab }: HistoryProps) {
             <tbody>
               {isLoading && (
                 <tr>
-                  <td colSpan={9} className="px-3 py-6 text-center text-sm text-slate-500">
+                  <td colSpan={13} className="px-3 py-6 text-center text-sm text-slate-500">
                     Loading runs…
                   </td>
                 </tr>
               )}
               {!isLoading && tableRows.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="px-3 py-6 text-center text-sm text-slate-500">
+                  <td colSpan={13} className="px-3 py-6 text-center text-sm text-slate-500">
                     No runs recorded.
                   </td>
                 </tr>
@@ -210,6 +216,7 @@ function History({ runs, isLoading, onRefresh, setActiveTab }: HistoryProps) {
                     <td className="px-3 py-2 text-slate-700">{formatDate(run.startedAt)}</td>
                     <td className="px-3 py-2 text-slate-700">{run.workload}</td>
                     <td className="px-3 py-2 text-slate-700">{run.protocol?.toUpperCase()}</td>
+                    <td className="px-3 py-2 text-slate-700 capitalize">{run.callPath ?? "—"}</td>
                     <td className="px-3 py-2 text-slate-700">{run.securityProfile}</td>
                     <td className="px-3 py-2 text-slate-700">{run.rps}</td>
                     <td className="px-3 py-2 text-slate-700">{formatNumber(run.p50Ms)}</td>

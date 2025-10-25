@@ -13,6 +13,7 @@ public class ResultsDbContext(DbContextOptions<ResultsDbContext> options) : DbCo
         entity.HasKey(run => run.Id);
         entity.Property(run => run.Protocol).HasMaxLength(16).IsRequired();
         entity.Property(run => run.SecurityProfile).HasMaxLength(8).IsRequired();
+        entity.Property(run => run.CallPath).HasMaxLength(16).IsRequired();
         entity.Property(run => run.Workload).HasMaxLength(64).IsRequired();
         entity.Property(run => run.Tool).HasMaxLength(16).IsRequired();
         entity.Property(run => run.SummaryPath).HasMaxLength(256);

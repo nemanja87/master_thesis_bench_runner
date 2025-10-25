@@ -252,6 +252,7 @@ function Compare({ runs, onNavigate }: CompareProps) {
                       <th scope="col" className="px-3 py-2 text-left">Run ID</th>
                       <th scope="col" className="px-3 py-2 text-left">Started</th>
                       <th scope="col" className="px-3 py-2 text-left">Protocol</th>
+                      <th scope="col" className="px-3 py-2 text-left">Call Path</th>
                       <th scope="col" className="px-3 py-2 text-left">Profile</th>
                       <th scope="col" className="px-3 py-2 text-left">Requested RPS</th>
                       <th scope="col" className="px-3 py-2 text-left">Throughput</th>
@@ -267,6 +268,7 @@ function Compare({ runs, onNavigate }: CompareProps) {
                         <td className="px-3 py-2 font-mono text-xs text-slate-700">{row.id}</td>
                         <td className="px-3 py-2 text-slate-700">{formatDate(row.summary?.startedAt)}</td>
                         <td className="px-3 py-2 text-slate-700">{row.summary?.protocol ?? "—"}</td>
+                        <td className="px-3 py-2 text-slate-700 capitalize">{row.summary?.callPath ?? "—"}</td>
                         <td className="px-3 py-2 text-slate-700">{row.summary?.securityMode ?? "—"}</td>
                         <td className="px-3 py-2 text-slate-700">{row.summary?.rpsRequested ?? "—"}</td>
                         <td className="px-3 py-2 text-slate-700">{formatNumber(row.metrics?.throughput.achievedRps)}</td>
@@ -300,9 +302,9 @@ function RunChip({ id, color, summary, onRemove }: RunChipProps) {
       <span className="flex h-2 w-2 rounded-full" style={{ backgroundColor: color }} aria-hidden="true" />
       <div className="flex flex-col text-left">
         <span className="font-semibold text-slate-900">{summary?.workload ?? id}</span>
-        <span className="text-xs text-slate-500">
-          {summary?.protocol ?? "—"} • {summary?.securityMode ?? "—"}
-        </span>
+      <span className="text-xs text-slate-500">
+          {summary?.protocol ?? "—"} • {summary?.callPath ?? "—"} • {summary?.securityMode ?? "—"}
+      </span>
       </div>
       <button
         type="button"

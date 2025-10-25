@@ -7,6 +7,7 @@ export function toRunSummary(run: BenchmarkRunListItem | BenchmarkRunDetails): R
     endedAt: run.endedAt,
     protocol: run.protocol?.toUpperCase?.() ?? run.protocol,
     securityMode: run.securityProfile,
+    callPath: run.callPath,
     workload: run.workload,
     rpsRequested: run.rps,
     durationSec: run.durationSeconds,

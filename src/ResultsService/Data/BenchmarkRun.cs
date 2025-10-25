@@ -8,6 +8,7 @@ public class BenchmarkRun
     public DateTimeOffset StartedAt { get; set; }
     public string Protocol { get; set; } = string.Empty;
     public string SecurityProfile { get; set; } = string.Empty;
+    public string CallPath { get; set; } = "gateway";
     public string Workload { get; set; } = string.Empty;
     public int Rps { get; set; }
     public int Connections { get; set; }

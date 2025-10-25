@@ -18,6 +18,11 @@ public class BenchmarkOrchestrator
         "rest",
         "grpc"
     };
+    private static readonly HashSet<string> SupportedCallPaths = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "gateway",
+        "direct"
+    };
 
     private static readonly HashSet<string> SupportedWorkloads = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -57,6 +62,9 @@ public class BenchmarkOrchestrator
 
         var protocol = request.Protocol.Trim().ToLowerInvariant();
         var securityProfileName = request.Security.Trim().ToUpperInvariant();
+        var callPath = string.IsNullOrWhiteSpace(request.CallPath)
+            ? "gateway"
+            : request.CallPath.Trim().ToLowerInvariant();
         var securityProfile = SecurityProfileDefaults.Parse(securityProfileName);
         var runId = Guid.NewGuid();
         var workingDirectory = Path.Combine(Path.GetTempPath(), "bench-runner", runId.ToString("N"));
@@ -67,13 +75,14 @@ public class BenchmarkOrchestrator
 
         var token = await _tokenProvider.TryAcquireTokenAsync(requiresJwt, cancellationToken);
 
-        var targetUrl = ResolveTargetUrl(protocol, securityProfileName);
+        var targetUrl = ResolveTargetUrl(protocol, securityProfileName, callPath);
 
         var context = new BenchmarkExecutionContext(
             runId,
             request,
             protocol,
             securityProfileName,
+            callPath,
             targetUrl,
             token,
             useMtls,
@@ -81,10 +90,11 @@ public class BenchmarkOrchestrator
             workingDirectory);
 
         _logger.LogInformation(
-            "Executing benchmark run {RunId} protocol={Protocol} security={Security} workload={Workload} rps={Rps} connections={Connections} duration={Duration}s warmup={Warmup}s",
+            "Executing benchmark run {RunId} protocol={Protocol} security={Security} callPath={CallPath} workload={Workload} rps={Rps} connections={Connections} duration={Duration}s warmup={Warmup}s",
             runId,
             protocol,
             securityProfileName,
+            callPath,
             request.Workload,
             request.Rps,
             request.Connections,
@@ -104,6 +114,7 @@ public class BenchmarkOrchestrator
             StartedAt = DateTimeOffset.UtcNow,
             Protocol = protocol,
             SecurityProfile = securityProfileName,
+            CallPath = callPath,
             Workload = request.Workload,
             Rps = request.Rps,
             Connections = request.Connections,
@@ -136,6 +147,11 @@ public class BenchmarkOrchestrator
         if (!SupportedProtocols.Contains(request.Protocol ?? string.Empty))
         {
             errors.Add("Protocol must be 'rest' or 'grpc'.");
+        }
+
+        if (!SupportedCallPaths.Contains(request.CallPath ?? "gateway"))
+        {
+            errors.Add("Call path must be 'gateway' or 'direct'.");
         }
 
         if (!SupportedWorkloads.Contains(request.Workload ?? string.Empty))
@@ -171,18 +187,23 @@ public class BenchmarkOrchestrator
         return errors;
     }
 
-    private string ResolveTargetUrl(string protocol, string securityProfile)
+    private string ResolveTargetUrl(string protocol, string securityProfile, string callPath)
     {
+        var useGateway = !string.Equals(callPath, "direct", StringComparison.OrdinalIgnoreCase);
+
         if (string.Equals(protocol, "rest", StringComparison.OrdinalIgnoreCase))
         {
             return securityProfile switch
             {
-                "S3" or "S4" => _options.Target.RestMtlsBaseUrl.TrimEnd('/'),
-                "S1" or "S2" => _options.Target.RestTlsBaseUrl.TrimEnd('/'),
-                _ => _options.Target.RestBaseUrl.TrimEnd('/')
+                "S3" or "S4" when useGateway => _options.Target.RestMtlsBaseUrl.TrimEnd('/'),
+                "S3" or "S4" => _options.Target.RestDirectMtlsBaseUrl.TrimEnd('/'),
+                "S1" or "S2" when useGateway => _options.Target.RestTlsBaseUrl.TrimEnd('/'),
+                "S1" or "S2" => _options.Target.RestDirectTlsBaseUrl.TrimEnd('/'),
+                _ when useGateway => _options.Target.RestBaseUrl.TrimEnd('/'),
+                _ => _options.Target.RestDirectBaseUrl.TrimEnd('/')
             };
         }
 
-        return _options.Target.GrpcAddress;
+        return useGateway ? _options.Target.GrpcAddress : _options.Target.GrpcDirectAddress;
     }
 }

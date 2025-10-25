@@ -8,6 +8,7 @@ import type {
   BenchRunRequest,
   BenchRunResponse,
   BenchmarkRunDetails,
+  CallPathOption,
   RunMetrics,
   RunSummary,
   SecurityProfile,
@@ -21,6 +22,7 @@ interface RunExperimentsProps {
 
 const DEFAULT_REQUEST: BenchRunRequest = {
   protocol: "grpc",
+  callPath: "gateway",
   security: "S2",
   workload: "orders-create",
   rps: 10,
@@ -28,6 +30,11 @@ const DEFAULT_REQUEST: BenchRunRequest = {
   warmup: 10,
   connections: 8,
 };
+
+const CALL_PATH_OPTIONS: Array<{ value: CallPathOption; label: string; description: string }> = [
+  { value: "gateway", label: "Gateway", description: "Routes through YARP front door" },
+  { value: "direct", label: "Direct", description: "Hits the service endpoint directly" },
+];
 
 const SECURITY_OPTIONS: Array<{ value: SecurityProfile; label: string; description: string }> = [
   { value: "S0", label: "S0 – HTTP", description: "Plain HTTP" },
@@ -123,7 +130,7 @@ function RunExperiments({ onRunCompleted, setActiveTab }: RunExperimentsProps) {
 
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <form className="space-y-6" onSubmit={handleSubmit}>
-            <div className="grid gap-5 md:grid-cols-2">
+            <div className="grid gap-5 md:grid-cols-3">
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
                 Protocol
                 <select
@@ -136,6 +143,29 @@ function RunExperiments({ onRunCompleted, setActiveTab }: RunExperimentsProps) {
                   <option value="rest">REST</option>
                   <option value="grpc">gRPC</option>
                 </select>
+              </label>
+
+              <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+                Call Path
+                <select
+                  className="rounded-xl border border-slate-300 px-3 py-2 text-base font-normal text-slate-900 focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-200"
+                  value={formState.callPath}
+                  onChange={(event) =>
+                    setFormState((current) => ({
+                      ...current,
+                      callPath: event.target.value as CallPathOption,
+                    }))
+                  }
+                >
+                  {CALL_PATH_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <span className="text-xs font-normal text-slate-500">
+                  {CALL_PATH_OPTIONS.find((option) => option.value === formState.callPath)?.description}
+                </span>
               </label>
 
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">

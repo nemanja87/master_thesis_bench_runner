@@ -157,6 +157,10 @@ public class RestBenchmarkToolRunner : IBenchmarkToolRunner
 
         sb.AppendLine();
         sb.AppendLine("export default function () {");
+        var apiPath = string.Equals(context.CallPath, "direct", StringComparison.OrdinalIgnoreCase)
+            ? "/api/orders"
+            : "/orders/api/orders";
+
         sb.AppendLine("  const headers = { 'Content-Type': 'application/json' };");
         sb.AppendLine("  const authHeader = __ENV.BENCH_AUTH_HEADER;");
         sb.AppendLine("  if (authHeader) { headers['Authorization'] = authHeader; }");
@@ -165,7 +169,8 @@ public class RestBenchmarkToolRunner : IBenchmarkToolRunner
         sb.AppendLine("    itemSkus: ['SKU-1000', 'SKU-2000'],");
         sb.AppendLine("    totalAmount: 199.99");
         sb.AppendLine("  });");
-        sb.AppendLine("  const res = http.post(`${__ENV.BENCH_BASE_URL}/orders/api/orders`, payload, { headers });");
+        sb.AppendLine($"  const resourcePath = '{apiPath}';");
+        sb.AppendLine("  const res = http.post(`${__ENV.BENCH_BASE_URL}${resourcePath}`, payload, { headers });");
         sb.AppendLine("  check(res, { 'status 201': r => r.status === 201 });");
         sb.AppendLine("}");
 

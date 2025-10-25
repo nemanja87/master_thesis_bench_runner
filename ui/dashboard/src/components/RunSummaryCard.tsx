@@ -93,6 +93,10 @@ function RunSummaryCard({ summary, metrics, onClose, onViewHistory, onCompare }:
           <dd className="font-medium text-slate-900">{summary.protocol}</dd>
         </div>
         <div>
+          <dt className="text-xs text-slate-500">Call path</dt>
+          <dd className="font-medium text-slate-900 capitalize">{summary.callPath ?? "—"}</dd>
+        </div>
+        <div>
           <dt className="text-xs text-slate-500">Security</dt>
           <dd className="font-medium text-slate-900">{summary.securityMode}</dd>
         </div>

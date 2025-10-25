@@ -17,6 +17,7 @@ function buildRun(overrides: Partial<BenchmarkRunListItem>): BenchmarkRunListIte
     startedAt: new Date().toISOString(),
     protocol: "grpc",
     securityProfile: "S2",
+    callPath: "gateway",
     workload: "orders-create",
     rps: 50,
     p50Ms: 10,

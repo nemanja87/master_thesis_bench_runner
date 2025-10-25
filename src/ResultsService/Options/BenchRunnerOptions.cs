@@ -14,6 +14,10 @@ public class BenchRunnerOptions
         public string RestTlsBaseUrl { get; set; } = "https://gateway:8080";
         public string RestMtlsBaseUrl { get; set; } = "https://gateway:8080";
         public string GrpcAddress { get; set; } = "gateway:9090";
+        public string RestDirectBaseUrl { get; set; } = "http://orderservice:8081";
+        public string RestDirectTlsBaseUrl { get; set; } = "https://orderservice:9091";
+        public string RestDirectMtlsBaseUrl { get; set; } = "https://orderservice:9091";
+        public string GrpcDirectAddress { get; set; } = "orderservice:9091";
     }
 
     public class SecurityOptions

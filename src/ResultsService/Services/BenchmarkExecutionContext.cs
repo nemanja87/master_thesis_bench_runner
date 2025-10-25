@@ -7,6 +7,7 @@ public record BenchmarkExecutionContext
     BenchRunRequest Request,
     string Protocol,
     string SecurityProfile,
+    string CallPath,
     string TargetUrl,
     string? JwtToken,
     bool UseMtls,

@@ -2,8 +2,11 @@ export type ProtocolOption = "rest" | "grpc";
 
 export type SecurityProfile = "S0" | "S1" | "S2" | "S3" | "S4";
 
+export type CallPathOption = "gateway" | "direct";
+
 export interface BenchRunRequest {
   protocol: ProtocolOption;
+  callPath: CallPathOption;
   security: SecurityProfile;
   workload: string;
   rps: number;
@@ -32,6 +35,7 @@ export interface BenchmarkRunListItem {
   endedAt?: string;
   protocol: string;
   securityProfile: string;
+  callPath: CallPathOption | string;
   workload: string;
   rps: number;
   durationSeconds?: number;
@@ -61,6 +65,7 @@ export interface RunSummary {
   endedAt?: string;
   protocol: string;
   securityMode: string;
+  callPath?: string;
   workload: string;
   rpsRequested: number;
   durationSec?: number;

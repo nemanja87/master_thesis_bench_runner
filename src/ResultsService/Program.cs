@@ -140,6 +140,7 @@ builder.Services.AddScoped<BenchmarkOrchestrator>();
 var app = builder.Build();
 
 await EnsureDatabaseCreatedAsync(app.Services);
+await EnsureSchemaUpgradesAsync(app.Services);
 
 if (app.Environment.IsDevelopment())
 {
@@ -206,6 +207,7 @@ api.MapGet("/runs", async (ResultsDbContext db, IOptions<ResultsOptions> results
             run.StartedAt,
             run.Protocol,
             run.SecurityProfile,
+            run.CallPath,
             run.Workload,
             run.Rps,
             run.P50Ms,
@@ -238,6 +240,7 @@ api.MapGet("/runs/{id:guid}", async (Guid id, ResultsDbContext db, IOptions<Resu
         run.StartedAt,
         run.Protocol,
         run.SecurityProfile,
+        run.CallPath,
         run.Workload,
         run.Rps,
         run.Connections,
@@ -308,6 +311,17 @@ static async Task EnsureDatabaseCreatedAsync(IServiceProvider services)
     using var scope = services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<ResultsDbContext>();
     await db.Database.EnsureCreatedAsync();
+}
+
+static async Task EnsureSchemaUpgradesAsync(IServiceProvider services)
+{
+    using var scope = services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<ResultsDbContext>();
+    const string sql = """
+        ALTER TABLE IF EXISTS benchmark_runs
+        ADD COLUMN IF NOT EXISTS "CallPath" VARCHAR(16) NOT NULL DEFAULT 'gateway';
+        """;
+    await db.Database.ExecuteSqlRawAsync(sql);
 }
 
 async Task<IResult> GetHealthStatus(ResultsDbContext db, CancellationToken cancellationToken)

@@ -25,6 +25,10 @@ Security behaviour is driven by the `SEC_PROFILE` environment variable:
 
 Shared helpers (in `Shared`) expose `SecurityProfileDefaults` so each service reacts consistently.
 
+### Gateway vs direct benchmarking
+
+BenchRunner can now hit workloads either **through the Gateway** (YARP reverse proxy) or **directly against OrderService**. Use the new “Call Path” dropdown on the Run Experiments screen (or the `callPath` field in the API) to flip between `gateway` and `direct`. Environment variables under `BENCH_Target__Rest*` control the gateway endpoints, while the new `BENCH_Target__RestDirect*` and `BENCH_Target__GrpcDirectAddress` settings define the direct OrderService addresses.
+
 ## Prerequisites
 
 - Docker Desktop (or Docker Engine + Compose v2)
@@ -178,6 +182,8 @@ Key environment knobs:
 | --- | --- |
 | `SEC_PROFILE` | Security posture selector (S0–S4). |
 | `BENCH_Target__*` | ResultsService base URLs for REST/gRPC benchmarks. |
+| `BENCH_Target__RestDirect*` | Direct-to-OrderService REST endpoints used when `callPath=direct`. |
+| `BENCH_Target__GrpcDirectAddress` | Direct-to-OrderService gRPC endpoint for `callPath=direct`. |
 | `BENCH_Security__Jwt__*` | Token endpoint configuration for BenchRunner. |
 | `BENCH_Security__Tls__*` | Paths to CA/client/server certificates. |
 | `RESULTS__AllowAnonymousReads` | Enable anonymous GET access to run history. |
