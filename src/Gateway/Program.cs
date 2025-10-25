@@ -51,10 +51,14 @@ var caCertificate = CertificateUtilities.TryLoadPemCertificate(
 var clientCertificatePath = GetBenchmarkSetting(builder.Configuration, "BENCH_Security__Tls__ClientCertificatePath");
 var clientCertificateKeyPath = GetBenchmarkSetting(builder.Configuration, "BENCH_Security__Tls__ClientCertificateKeyPath");
 Console.WriteLine($"Gateway TLS configuration: requiresMtls={requiresMtls}, clientCertPath='{clientCertificatePath ?? "<null>"}', clientKeyPath='{clientCertificateKeyPath ?? "<null>"}'");
-var clientCertificate = CertificateUtilities.TryLoadPemCertificate(
-    clientCertificatePath,
-    clientCertificateKeyPath,
-    optional: !(requiresMtls || requiresJwt));
+X509Certificate2? clientCertificate = null;
+if (requiresMtls)
+{
+    clientCertificate = CertificateUtilities.TryLoadPemCertificate(
+        clientCertificatePath,
+        clientCertificateKeyPath,
+        optional: false);
+}
 
 if (requiresHttps && serverCertificate is null)
 {
@@ -191,11 +195,33 @@ if (requiresJwt)
                 ValidateAudience = false
             };
 
-           if (preloadedOpenIdConfiguration is not null)
-           {
-               options.Configuration = preloadedOpenIdConfiguration;
+            if (preloadedOpenIdConfiguration is not null)
+            {
+                options.Configuration = preloadedOpenIdConfiguration;
                 options.TokenValidationParameters.IssuerSigningKeys = preloadedOpenIdConfiguration.SigningKeys;
-           }
+            }
+
+            options.Events = new JwtBearerEvents
+            {
+                OnAuthenticationFailed = context =>
+                {
+                    var logger = context.HttpContext.RequestServices
+                        .GetRequiredService<ILoggerFactory>()
+                        .CreateLogger("Gateway.JwtBearer");
+                    var authorizationHeader = context.HttpContext.Request.Headers["Authorization"].ToString();
+                    var preview = string.IsNullOrEmpty(authorizationHeader)
+                        ? "<missing>"
+                        : authorizationHeader.Length > 32
+                            ? authorizationHeader[..32]
+                            : authorizationHeader;
+                    logger.LogWarning(
+                        context.Exception,
+                        "JWT authentication failed for {Path}. Authorization preview={Preview}",
+                        context.HttpContext.Request.Path,
+                        preview);
+                    return Task.CompletedTask;
+                }
+            };
         });
 
     builder.Services.AddAuthorization();

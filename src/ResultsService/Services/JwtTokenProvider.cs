@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ResultsService.Options;
@@ -28,12 +29,17 @@ public class JwtTokenProvider
             return null;
         }
 
-        var handler = HttpHandlerFactory.CreateBackchannelHandler(
-            CertificateUtilities.TryLoadPemCertificate(_options.Security.Tls.CaCertificatePath, optional: true),
-            CertificateUtilities.TryLoadPemCertificate(
+        var caCertificate = CertificateUtilities.TryLoadPemCertificate(_options.Security.Tls.CaCertificatePath, optional: true);
+        X509Certificate2? clientCertificate = null;
+        if (SecurityProfileDefaults.RequiresMtls())
+        {
+            clientCertificate = CertificateUtilities.TryLoadPemCertificate(
                 _options.Security.Tls.ClientCertificatePath,
                 _options.Security.Tls.ClientCertificateKeyPath,
-                optional: true));
+                optional: true);
+        }
+
+        var handler = HttpHandlerFactory.CreateBackchannelHandler(caCertificate, clientCertificate);
 
         try
         {

@@ -47,7 +47,9 @@ var serverCertificate = requiresHttps
 var caCertificate = CertificateUtilities.TryLoadPemCertificate(
     caCertificatePath,
     optional: !(requiresHttps || requiresJwt || requiresMtls));
-Console.WriteLine($"OrderService TLS configuration: requiresMtls={requiresMtls}, requiresJwt={requiresJwt}, clientCertPath='{GetConfigurationValue(builder.Configuration, "BENCH_Security__Tls__ClientCertificatePath") ?? "<null>"}', clientKeyPath='{GetConfigurationValue(builder.Configuration, "BENCH_Security__Tls__ClientCertificateKeyPath") ?? "<null>"}'");
+var clientCertificatePath = GetConfigurationValue(builder.Configuration, "BENCH_Security__Tls__ClientCertificatePath");
+var clientCertificateKeyPath = GetConfigurationValue(builder.Configuration, "BENCH_Security__Tls__ClientCertificateKeyPath");
+Console.WriteLine($"OrderService TLS configuration: requiresMtls={requiresMtls}, requiresJwt={requiresJwt}, clientCertPath='{clientCertificatePath ?? "<null>"}', clientKeyPath='{clientCertificateKeyPath ?? "<null>"}'");
 
 if (requiresHttps && serverCertificate is null)
 {
@@ -123,10 +125,14 @@ if (requiresJwt)
     var authorityTrimmed = authority.TrimEnd('/');
     var metadataAddress = GetConfigurationValue(builder.Configuration, "BENCH_Security__Jwt__MetadataAddress")
         ?? $"{authorityTrimmed}/.well-known/openid-configuration";
-    var clientCertificatePath = GetConfigurationValue(builder.Configuration, "BENCH_Security__Tls__ClientCertificatePath");
-    var clientCertificateKeyPath = GetConfigurationValue(builder.Configuration, "BENCH_Security__Tls__ClientCertificateKeyPath");
-    var clientCertificate = CertificateUtilities.TryLoadPemCertificate(clientCertificatePath, clientCertificateKeyPath)
-        ?? serverCertificate;
+    X509Certificate2? clientCertificate = null;
+    if (requiresMtls)
+    {
+        clientCertificate = CertificateUtilities.TryLoadPemCertificate(
+            clientCertificatePath,
+            clientCertificateKeyPath,
+            optional: true) ?? serverCertificate;
+    }
     Console.WriteLine($"OrderService JWT configuration: authority='{authorityTrimmed}', clientCertPath='{clientCertificatePath ?? "<null>"}', clientKeyPath='{clientCertificateKeyPath ?? "<null>"}'");
 
     jwtBackchannelHandler = HttpHandlerFactory.CreateBackchannelHandler(caCertificate, clientCertificate);
