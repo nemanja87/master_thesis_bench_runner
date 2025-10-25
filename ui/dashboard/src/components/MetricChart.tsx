@@ -3,7 +3,7 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
-  Legend,
+  LabelList,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -88,7 +88,6 @@ function MetricChart({
               domain={["auto", "auto"]}
             />
             <Tooltip content={<MetricTooltipContent unit="ms" />} />
-            <Legend />
             {sanitizedRuns.map((run) => (
               <Line
                 key={run.id}
@@ -98,10 +97,13 @@ function MetricChart({
                 stroke={run.color}
                 strokeWidth={2}
                 dot={{ r: 3 }}
-              />
+              >
+                <LabelList content={(props) => <LatencyLabel {...props} />} />
+              </Line>
             ))}
           </LineChart>
         </ResponsiveContainer>
+        <RunLegend runs={sanitizedRuns} variant="line" />
       </ChartWrapper>
     );
   }
@@ -184,12 +186,16 @@ function MetricTooltipContent({ active, payload, label, unit }: TooltipProps<num
   );
 }
 
-function RunLegend({ runs }: { runs: ComparisonRun[] }) {
+function RunLegend({ runs, variant = "dot" }: { runs: ComparisonRun[]; variant?: "dot" | "line" }) {
   return (
     <div className="mt-4 flex flex-wrap gap-3">
       {runs.map((run) => (
         <div key={run.id} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs">
-          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: run.color }} />
+          {variant === "line" ? (
+            <span className="h-[2px] w-6 rounded-full" style={{ backgroundColor: run.color }} />
+          ) : (
+            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: run.color }} />
+          )}
           <span className="font-medium text-slate-700">
             {run.label} ({run.id})
           </span>
@@ -205,6 +211,28 @@ function EmptyMetric({ title, message }: { title: string; message: string }) {
       <h3 className="text-base font-semibold text-slate-900">{title}</h3>
       <p className="mt-2">{message}</p>
     </section>
+  );
+}
+
+function LatencyLabel({
+  x,
+  y,
+  value,
+}: {
+  x?: number | string;
+  y?: number | string;
+  value?: number | string;
+}) {
+  const numericX = typeof x === "number" ? x : Number(x);
+  const numericY = typeof y === "number" ? y : Number(y);
+  const numericValue = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(numericX) || !Number.isFinite(numericY) || !Number.isFinite(numericValue)) {
+    return null;
+  }
+  return (
+    <text x={numericX} y={numericY - 8} textAnchor="middle" fontSize={10} fill="#0f172a">
+      {numericValue.toFixed(1)}
+    </text>
   );
 }
 
