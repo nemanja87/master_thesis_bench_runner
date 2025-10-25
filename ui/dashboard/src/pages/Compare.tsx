@@ -20,6 +20,7 @@ const LATENCY_BUCKETS: Array<{ id: LatencyMetric; label: string }> = [
 ];
 
 const RUN_COLORS = ["#0f172a", "#2563eb", "#f97316", "#0d9488", "#f43f5e", "#7c3aed"];
+const detailDateFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
 
 function Compare({ runs, onNavigate }: CompareProps) {
   const selectedIds = useRunSelection((state) => state.selectedIds);
@@ -115,6 +116,23 @@ function Compare({ runs, onNavigate }: CompareProps) {
   const activeLatencyBuckets = LATENCY_BUCKETS.filter((bucket) => selectedMetrics.includes(bucket.id));
   const showThroughput = selectedMetrics.includes("throughput");
   const showErrors = selectedMetrics.includes("errorRate");
+  const comparisonRunMap = useMemo(() => {
+    const map: Record<string, ComparisonRun> = {};
+    for (const run of comparisonRuns) {
+      map[run.id] = run;
+    }
+    return map;
+  }, [comparisonRuns]);
+
+  const detailRows = useMemo(
+    () =>
+      chipSummaries.map((chip) => ({
+        id: chip.id,
+        summary: chip.summary,
+        metrics: comparisonRunMap[chip.id]?.metrics,
+      })),
+    [chipSummaries, comparisonRunMap],
+  );
 
   function toggleMetric(metric: MetricOption) {
     setSelectedMetrics((current) => {
@@ -222,6 +240,47 @@ function Compare({ runs, onNavigate }: CompareProps) {
               emptyMessage="Error rate metrics unavailable."
             />
           )}
+
+          {detailRows.length > 0 && (
+            <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <h3 className="text-lg font-semibold text-slate-900">Metric Details</h3>
+              <p className="text-sm text-slate-500">Numeric values for the selected runs.</p>
+              <div className="mt-4 overflow-x-auto">
+                <table className="min-w-full table-fixed border-collapse text-sm">
+                  <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                    <tr>
+                      <th scope="col" className="px-3 py-2 text-left">Run ID</th>
+                      <th scope="col" className="px-3 py-2 text-left">Started</th>
+                      <th scope="col" className="px-3 py-2 text-left">Protocol</th>
+                      <th scope="col" className="px-3 py-2 text-left">Profile</th>
+                      <th scope="col" className="px-3 py-2 text-left">Requested RPS</th>
+                      <th scope="col" className="px-3 py-2 text-left">Throughput</th>
+                      <th scope="col" className="px-3 py-2 text-left">p50 (ms)</th>
+                      <th scope="col" className="px-3 py-2 text-left">p90 (ms)</th>
+                      <th scope="col" className="px-3 py-2 text-left">p99 (ms)</th>
+                      <th scope="col" className="px-3 py-2 text-left">Error %</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {detailRows.map((row) => (
+                      <tr key={row.id} className="border-b border-slate-100">
+                        <td className="px-3 py-2 font-mono text-xs text-slate-700">{row.id}</td>
+                        <td className="px-3 py-2 text-slate-700">{formatDate(row.summary?.startedAt)}</td>
+                        <td className="px-3 py-2 text-slate-700">{row.summary?.protocol ?? "—"}</td>
+                        <td className="px-3 py-2 text-slate-700">{row.summary?.securityMode ?? "—"}</td>
+                        <td className="px-3 py-2 text-slate-700">{row.summary?.rpsRequested ?? "—"}</td>
+                        <td className="px-3 py-2 text-slate-700">{formatNumber(row.metrics?.throughput.achievedRps)}</td>
+                        <td className="px-3 py-2 text-slate-700">{formatNumber(row.metrics?.latency.p50)}</td>
+                        <td className="px-3 py-2 text-slate-700">{formatNumber(row.metrics?.latency.p90)}</td>
+                        <td className="px-3 py-2 text-slate-700">{formatNumber(row.metrics?.latency.p99)}</td>
+                        <td className="px-3 py-2 text-slate-700">{formatNumber(row.metrics?.errors?.errorRatePct)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
         </div>
       )}
     </div>
@@ -255,6 +314,24 @@ function RunChip({ id, color, summary, onRemove }: RunChipProps) {
       </button>
     </div>
   );
+}
+
+function formatDate(value?: string) {
+  if (!value) {
+    return "—";
+  }
+  try {
+    return detailDateFormatter.format(new Date(value));
+  } catch {
+    return value;
+  }
+}
+
+function formatNumber(value?: number) {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return "—";
+  }
+  return value.toFixed(2);
 }
 
 export default Compare;

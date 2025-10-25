@@ -53,5 +53,6 @@ describe("Compare screen", () => {
     await waitFor(() => expect(mockedGetRun).toHaveBeenCalledTimes(2));
     expect(await screen.findByText(/Latency Percentiles/i)).toBeInTheDocument();
     expect(screen.getByText(/Throughput \(requests\/sec\)/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Metric Details/i)).toBeInTheDocument();
   });
 });

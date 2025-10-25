@@ -112,7 +112,7 @@ function History({ runs, isLoading, onRefresh, setActiveTab }: HistoryProps) {
                 <th scope="col" className="px-3 py-2 text-left">Started</th>
                 <th scope="col" className="px-3 py-2 text-left">Workload</th>
                 <th scope="col" className="px-3 py-2 text-left">Protocol</th>
-                <th scope="col" className="px-3 py-2 text-left">Security</th>
+                <th scope="col" className="px-3 py-2 text-left">Profile</th>
                 <th scope="col" className="px-3 py-2 text-left">RPS</th>
                 <th scope="col" className="px-3 py-2 text-left">Duration</th>
                 <th scope="col" className="px-3 py-2 text-left">Status</th>
