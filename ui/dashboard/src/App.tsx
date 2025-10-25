@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import "./App.css";
 import { getHealth, listRuns, getRun, startBench } from "./lib/api";
@@ -152,14 +152,6 @@ function App() {
       setIsSubmitting(false);
     }
   }
-
-  const percentiles = useMemo(() => runs.map((run) => ({
-    id: run.id,
-    startedAt: new Date(run.startedAt),
-    p50: run.p50Ms,
-    p95: run.p95Ms,
-    p99: run.p99Ms,
-  })), [runs]);
 
   return (
     <div className="app-container">
@@ -339,51 +331,6 @@ function App() {
         </section>
       </main>
     </div>
-  );
-}
-
-interface PercentilePoint {
-  id: string;
-  startedAt: Date;
-  p50: number;
-  p95: number;
-  p99: number;
-}
-
-function PercentileChart({ data }: { data: PercentilePoint[] }) {
-  if (data.length === 0) {
-    return <div className="chart-empty">No runs to visualise yet.</div>;
-  }
-
-  const maxLatency = Math.max(...data.flatMap((point) => [point.p50, point.p95, point.p99]));
-  const chartHeight = 160;
-  const chartWidth = 480;
-  const padding = 20;
-  const scaleY = (value: number) => chartHeight - padding - (value / maxLatency) * (chartHeight - padding * 2);
-  const scaleX = (index: number) => padding + (index / Math.max(1, data.length - 1)) * (chartWidth - padding * 2);
-
-  const createPath = (extractor: (point: PercentilePoint) => number) => {
-    return data
-      .map((point, index) => `${index === 0 ? "M" : "L"}${scaleX(index)},${scaleY(extractor(point))}`)
-      .join(" ");
-  };
-
-  return (
-    <svg className="chart" viewBox={`0 0 ${chartWidth} ${chartHeight}`}>
-      <line x1={padding} x2={padding} y1={padding} y2={chartHeight - padding} className="axis" />
-      <line x1={padding} x2={chartWidth - padding} y1={chartHeight - padding} y2={chartHeight - padding} className="axis" />
-      <path d={createPath((point) => point.p50)} className="line p50" />
-      <path d={createPath((point) => point.p95)} className="line p95" />
-      <path d={createPath((point) => point.p99)} className="line p99" />
-      {data.map((point, index) => (
-        <g key={point.id}>
-          <circle cx={scaleX(index)} cy={scaleY(point.p50)} r={3} className="point p50" />
-          <circle cx={scaleX(index)} cy={scaleY(point.p95)} r={3} className="point p95" />
-          <circle cx={scaleX(index)} cy={scaleY(point.p99)} r={3} className="point p99" />
-        </g>
-      ))}
-      <text x={padding} y={padding} className="chart-title">Latency percentiles (ms)</text>
-    </svg>
   );
 }
 

@@ -16,15 +16,27 @@ using Shared.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
+static string? GetConfigurationValue(IConfiguration configuration, string key)
+{
+    var envValue = Environment.GetEnvironmentVariable(key);
+    if (!string.IsNullOrWhiteSpace(envValue))
+    {
+        return envValue;
+    }
+
+    var colonKey = key.Replace("__", ":", StringComparison.Ordinal);
+    return configuration[colonKey] ?? configuration[key];
+}
+
 var requiresHttps = SecurityProfileDefaults.RequiresHttps();
 var requiresMtls = SecurityProfileDefaults.RequiresMtls();
 var requiresJwt = SecurityProfileDefaults.RequiresJwt();
 var requiresPerMethodPolicies = SecurityProfileDefaults.RequiresPerMethodPolicies();
 
-var serverCertificatePath = builder.Configuration["BENCH_Security__Tls__ServerCertificatePath"]
+var serverCertificatePath = GetConfigurationValue(builder.Configuration, "BENCH_Security__Tls__ServerCertificatePath")
     ?? "/certs/servers/inventoryservice/inventoryservice.pfx";
-var serverCertificatePassword = builder.Configuration["BENCH_Security__Tls__ServerCertificatePassword"];
-var caCertificatePath = builder.Configuration["BENCH_Security__Tls__CaCertificatePath"] ?? "/certs/ca/ca.crt.pem";
+var serverCertificatePassword = GetConfigurationValue(builder.Configuration, "BENCH_Security__Tls__ServerCertificatePassword");
+var caCertificatePath = GetConfigurationValue(builder.Configuration, "BENCH_Security__Tls__CaCertificatePath") ?? "/certs/ca/ca.crt.pem";
 
 var serverCertificate = requiresHttps
     ? CertificateUtilities.TryLoadPfxCertificate(serverCertificatePath, serverCertificatePassword, optional: false)
@@ -87,12 +99,12 @@ SocketsHttpHandler? jwtBackchannelHandler = null;
 
 if (requiresJwt)
 {
-    var authority = builder.Configuration["BENCH_Security__Jwt__Authority"] ?? "https://authserver:5001";
+    var authority = GetConfigurationValue(builder.Configuration, "BENCH_Security__Jwt__Authority") ?? "https://authserver:5001";
     var authorityTrimmed = authority.TrimEnd('/');
-    var metadataAddress = builder.Configuration["BENCH_Security__Jwt__MetadataAddress"]
+    var metadataAddress = GetConfigurationValue(builder.Configuration, "BENCH_Security__Jwt__MetadataAddress")
         ?? $"{authorityTrimmed}/.well-known/openid-configuration";
-    var clientCertificatePath = builder.Configuration["BENCH_Security__Tls__ClientCertificatePath"];
-    var clientCertificateKeyPath = builder.Configuration["BENCH_Security__Tls__ClientCertificateKeyPath"];
+    var clientCertificatePath = GetConfigurationValue(builder.Configuration, "BENCH_Security__Tls__ClientCertificatePath");
+    var clientCertificateKeyPath = GetConfigurationValue(builder.Configuration, "BENCH_Security__Tls__ClientCertificateKeyPath");
     var clientCertificate = CertificateUtilities.TryLoadPemCertificate(clientCertificatePath, clientCertificateKeyPath);
 
     jwtBackchannelHandler = HttpHandlerFactory.CreateBackchannelHandler(caCertificate, clientCertificate);
@@ -232,3 +244,5 @@ bool ValidateClientCertificate(X509Certificate2? certificate)
     chain.ChainPolicy.CustomTrustStore.Add(caCertificate);
     return chain.Build(certificate);
 }
+
+public partial class Program;
